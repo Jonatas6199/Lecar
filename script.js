@@ -3,21 +3,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardScreen = document.getElementById('dashboard-screen');
     const loginButton = document.getElementById('login-button');
     const logoutButton = document.getElementById('logout-button');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
+    const newClientButton = document.getElementById('new-client-button'); // Novo botão
     const clientsUl = document.getElementById('clients-ul');
-    const noClientsMessage = document.getElementById('no-clients-message'); // Nova mensagem de "nenhum cliente"
+    const noClientsMessage = document.getElementById('no-clients-message');
 
-    const clientSearchInput = document.getElementById('client-search'); // Campo de busca
-    const carModelFilter = document.getElementById('car-model-filter'); // Filtro por carro
-    const paymentStatusFilter = document.getElementById('payment-status-filter'); // Filtro por status de pagamento
+    const clientSearchInput = document.getElementById('client-search');
+    const carModelFilter = document.getElementById('car-model-filter');
+    const paymentStatusFilter = document.getElementById('payment-status-filter');
 
-    const totalPaidValueElement = document.getElementById('total-paid-value'); // Elemento para total pago
-    const totalPendingValueElement = document.getElementById('total-pending-value'); // Elemento para total pendente
-    const paymentChartCanvas = document.getElementById('paymentChart'); // Canvas para o gráfico
+    const totalPaidValueElement = document.getElementById('total-paid-value');
+    const totalPendingValueElement = document.getElementById('total-pending-value');
+    const paymentChartCanvas = document.getElementById('paymentChart');
 
+    // Elementos do modal de detalhes de pagamento
     const paymentDetailsModal = document.getElementById('payment-details-modal');
-    const closeButton = paymentDetailsModal.querySelector('.close-button');
+    const closeButtons = document.querySelectorAll('.close-button'); // Seleciona todos os botões de fechar
     const modalClientName = document.getElementById('modal-client-name');
     const modalClientCpf = document.getElementById('modal-client-cpf');
     const modalCarModel = document.getElementById('modal-car-model');
@@ -27,11 +27,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const generatePaymentLinkButton = document.getElementById('generate-payment-link-button');
     const paymentLinkMessage = document.getElementById('payment-link-message');
 
+    // Elementos do NOVO MODAL de cadastro de cliente
+    const newClientModal = document.getElementById('new-client-modal');
+    const newClientForm = document.getElementById('new-client-form');
+    const newClientNameInput = document.getElementById('new-client-name');
+    const newClientCpfInput = document.getElementById('new-client-cpf');
+    const newClientCarModelSelect = document.getElementById('new-client-car-model');
+    const newClientInstallmentsInput = document.getElementById('new-client-installments');
+    const newClientInstallmentValueInput = document.getElementById('new-client-installment-value');
+    const newClientDueDateInput = document.getElementById('new-client-due-date');
+
     let selectedBoletos = [];
     let currentClientData = null;
-    let paymentChartInstance = null; // Para armazenar a instância do Chart.js
+    let paymentChartInstance = null;
 
-    // Dados de demonstração (adicionando mais clientes e modelos de carro)
+    // Dados de demonstração (mantidos e incrementados com mais carros para o filtro)
     const demoClients = [
         {
             id: 'user001',
@@ -97,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'user003',
             name: 'Carlos Oliveira',
             cpf: '111.222.333-44',
-            carModel: 'Lecar Campo',
+            carModel: 'Lecar 459',
             payments: {
                 method: 'Bolepix',
                 totalInstallments: 36,
@@ -105,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: i + 1,
                     value: 1500.00,
                     paid: i < 15, // 15 pagos, 21 pendentes
-                    date: `2024-${String(i + 1).padStart(2, '0')}-05` // Data simulada
+                    date: `2024-${String(i + 1).padStart(2, '0')}-05`
                 }))
             }
         },
@@ -124,12 +134,67 @@ document.addEventListener('DOMContentLoaded', () => {
                     date: `2024-${String(i + 1).padStart(2, '0')}-20`
                 }))
             }
+        },
+        {
+            id: 'user005',
+            name: 'Fernando Rocha',
+            cpf: '777.888.999-00',
+            carModel: 'Lecar Campo',
+            payments: {
+                method: 'Bolepix',
+                totalInstallments: 18,
+                installments: Array.from({ length: 18 }, (_, i) => ({
+                    id: i + 1,
+                    value: 3500.00,
+                    paid: i < 2, // 2 pagos, 16 pendentes
+                    date: `2024-${String(i + 1).padStart(2, '0')}-15`
+                }))
+            }
+        },
+        {
+            id: 'user006',
+            name: 'Gabriela Alves',
+            cpf: '101.202.303-40',
+            carModel: 'Lecar Campo',
+            payments: {
+                method: 'Bolepix',
+                totalInstallments: 6,
+                installments: Array.from({ length: 6 }, (_, i) => ({
+                    id: i + 1,
+                    value: 2000.00,
+                    paid: false, // Nenhum pago
+                    date: `2024-${String(i + 1).padStart(2, '0')}-25`
+                }))
+            }
         }
     ];
 
+    // Modelos de carro disponíveis (para o select de cadastro)
+    const availableCarModels = [
+        'Lecar 459',
+        'Lecar Campo',
+    ];
+
+    // --- Funções Auxiliares ---
+
+    // Função para gerar um ID único simples (para novos clientes)
+    function generateUniqueId() {
+        return 'user' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // Função para gerar um código de barras simulado (apenas uma string aleatória)
+    function generateBarCode() {
+        return Array(47).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
+    }
+
+    // Função para gerar uma URL de banco simulada
+    function generateBankPaymentUrl(boletoId, clientName, value) {
+        // Exemplo: https://banco-fake.com/pagar?boleto=XYZ&cliente=ABC&valor=123.45
+        return `https://banco.lecar.com/pagar?boleto=${boletoId}&cliente=${encodeURIComponent(clientName)}&valor=${value.toFixed(2)}`;
+    }
+
     // --- Funções do Dashboard ---
 
-    // Função para renderizar a lista de clientes com filtros e busca
     function renderClientList() {
         const searchTerm = clientSearchInput.value.toLowerCase();
         const selectedCarModel = carModelFilter.value;
@@ -144,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalPaid = client.payments.installments.filter(b => b.paid).length;
                 const totalInstallments = client.payments.totalInstallments;
                 if (selectedPaymentStatus === 'paid') {
-                    matchesPaymentStatus = (totalPaid === totalInstallments);
+                    matchesPaymentStatus = (totalPaid === totalInstallments && totalInstallments > 0); // Considera que pagou tudo se não há parcelas ou todas pagas
                 } else if (selectedPaymentStatus === 'pending') {
                     matchesPaymentStatus = (totalPaid < totalInstallments);
                 }
@@ -152,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return matchesSearch && matchesCarModel && matchesPaymentStatus;
         });
 
-        clientsUl.innerHTML = ''; // Limpa a lista existente
+        clientsUl.innerHTML = '';
 
         if (filteredClients.length === 0) {
             noClientsMessage.classList.remove('hidden');
@@ -171,22 +236,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Função para preencher o filtro de modelos de carro
-    function populateCarModelFilter() {
-        const carModels = [...new Set(demoClients.map(client => client.carModel))];
-        carModels.sort().forEach(model => {
+    // Função para preencher o filtro de modelos de carro E o select do novo cliente
+    function populateCarModelFilters() {
+        const uniqueCarModels = [...new Set(demoClients.map(client => client.carModel).concat(availableCarModels))];
+        uniqueCarModels.sort();
+
+        // Limpa e preenche o filtro de busca no dashboard
+        carModelFilter.innerHTML = '<option value="all">Filtrar por Carro (Todos)</option>';
+        uniqueCarModels.forEach(model => {
             const option = document.createElement('option');
             option.value = model;
             option.textContent = model;
             carModelFilter.appendChild(option);
         });
+
+        // Limpa e preenche o select de cadastro de novo cliente
+        newClientCarModelSelect.innerHTML = '<option value="">Selecione um carro</option>';
+        availableCarModels.sort().forEach(model => { // Usa apenas os modelos "disponíveis" para cadastro
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            newClientCarModelSelect.appendChild(option);
+        });
     }
 
-    // Função para calcular e exibir totais e renderizar o gráfico
     function updateDashboardSummary() {
         let totalPaid = 0;
         let totalPending = 0;
-        const salesByCarModel = {}; // { 'Lecar 459': { paid: 0, pending: 0 } }
+        const salesByCarModel = {};
 
         demoClients.forEach(client => {
             if (!salesByCarModel[client.carModel]) {
@@ -210,33 +287,31 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPaymentChart(salesByCarModel);
     }
 
-    // Função para renderizar o gráfico com Chart.js
     function renderPaymentChart(data) {
         const labels = Object.keys(data);
         const paidData = labels.map(model => data[model].paid);
         const pendingData = labels.map(model => data[model].pending);
 
-        // Destrói a instância anterior do gráfico se existir
         if (paymentChartInstance) {
             paymentChartInstance.destroy();
         }
 
         paymentChartInstance = new Chart(paymentChartCanvas, {
-            type: 'bar', // Pode ser 'bar', 'doughnut', 'pie', etc.
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Total Recebido',
                         data: paidData,
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)', // Verde
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
                         borderColor: 'rgba(40, 167, 69, 1)',
                         borderWidth: 1
                     },
                     {
                         label: 'Total Pendente',
                         data: pendingData,
-                        backgroundColor: 'rgba(220, 53, 69, 0.7)', // Vermelho
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
                         borderColor: 'rgba(220, 53, 69, 1)',
                         borderWidth: 1
                     }
@@ -244,16 +319,16 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Importante para controle de tamanho
+                maintainAspectRatio: false,
                 scales: {
                     x: {
-                        stacked: true, // Empilha as barras
+                        stacked: true,
                         grid: {
                             display: false
                         }
                     },
                     y: {
-                        stacked: true, // Empilha as barras
+                        stacked: true,
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
@@ -285,42 +360,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Funções de Login/Logout e Modal de Pagamento ---
 
-    // --- Funções de Login/Logout e Modal de Pagamento (Mantidas as mesmas) ---
-
-    // Função para simular o login
     loginButton.addEventListener('click', () => {
-        const email = emailInput.value;
-        const password = passwordInput.value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
         if (email === 'teste@lecar.com' && password === 'lecar123') {
             loginScreen.classList.remove('active');
             dashboardScreen.classList.add('active');
-            populateCarModelFilter(); // Popula o filtro de carros ao entrar
-            updateDashboardSummary(); // Atualiza o resumo e o gráfico
-            renderClientList(); // Renderiza a lista inicial
+            populateCarModelFilters(); // Popula ambos os filtros/selects
+            updateDashboardSummary();
+            renderClientList();
         } else {
             alert('Email ou senha inválidos. Use: teste@lecar.com / lecar123');
         }
     });
 
-    // Função para simular o logout
     logoutButton.addEventListener('click', () => {
         dashboardScreen.classList.remove('active');
         loginScreen.classList.add('active');
-        emailInput.value = '';
-        passwordInput.value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
         clientsUl.innerHTML = '';
-        clientSearchInput.value = ''; // Limpa a busca
-        carModelFilter.value = 'all'; // Reseta o filtro de carro
-        paymentStatusFilter.value = 'all'; // Reseta o filtro de status
-        if (paymentChartInstance) { // Destrói o gráfico ao sair
+        clientSearchInput.value = '';
+        carModelFilter.value = 'all';
+        paymentStatusFilter.value = 'all';
+        if (paymentChartInstance) {
             paymentChartInstance.destroy();
             paymentChartInstance = null;
         }
     });
 
-    // Mostra os detalhes de pagamento do cliente no modal
+    // Abre o modal de detalhes de pagamento
     function showPaymentDetails(clientId) {
         currentClientData = demoClients.find(client => client.id === clientId);
         if (!currentClientData) return;
@@ -338,36 +410,48 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentDetailsModal.classList.add('active');
     }
 
-    // Fecha o modal de detalhes de pagamento
-    closeButton.addEventListener('click', () => {
-        paymentDetailsModal.classList.remove('active');
-    });
-
-    // Fecha o modal se clicar fora dele
-    window.addEventListener('click', (event) => {
-        if (event.target === paymentDetailsModal) {
-            paymentDetailsModal.classList.remove('active');
-        }
-    });
-
-    // Renderiza os boletos (pagos e pendentes)
+    // Renderiza os boletos (pagos e pendentes) com link/código de barras
     function renderBoletos() {
         boletoStatusContainer.innerHTML = '';
         currentClientData.payments.installments.forEach(boleto => {
             const boletoDiv = document.createElement('div');
             boletoDiv.classList.add('boleto-item');
             boletoDiv.classList.add(boleto.paid ? 'paid' : 'pending');
+
+            const barcode = generateBarCode(); // Gera um código de barras simulado
+            const paymentUrl = generateBankPaymentUrl(boleto.id, currentClientData.name, boleto.value); // Gera URL de pagamento simulada
+
             boletoDiv.innerHTML = `
                 <span>Boleto ${boleto.id}</span>
                 <span>R$ ${boleto.value.toFixed(2).replace('.', ',')}</span>
                 <span>${boleto.paid ? 'Pago' : 'Pendente'}</span>
-                ${boleto.paid ? `<span>${boleto.date}</span>` : ''}
+                ${boleto.paid ? `<span>${boleto.date}</span>` :
+                    `<a href="${paymentUrl}" target="_blank" class="boleto-link" title="Copiar código: ${barcode}">Link de Pagamento</a>
+                     <span class="barcode-copy-hint" style="font-size: 0.6em; cursor: pointer;" data-barcode="${barcode}">Copiar Cód. Barras</span>`
+                }
             `;
             boletoStatusContainer.appendChild(boletoDiv);
+
+            // Adiciona evento para copiar código de barras
+            if (!boleto.paid) {
+                const copyHint = boletoDiv.querySelector('.barcode-copy-hint');
+                if (copyHint) {
+                    copyHint.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Evita que clique no boleto inteiro
+                        const code = copyHint.dataset.barcode;
+                        navigator.clipboard.writeText(code).then(() => {
+                            alert(`Código de barras copiado: ${code}`);
+                        }).catch(err => {
+                            console.error('Falha ao copiar texto: ', err);
+                            alert(`Falha ao copiar. Código de barras: ${code}`);
+                        });
+                    });
+                }
+            }
         });
     }
 
-    // Renderiza os boletos para seleção de antecipação
+    // Renderiza os boletos para seleção de antecipação (mantido o mesmo)
     function renderAnticipationBoletos() {
         anticipateBoletosContainer.innerHTML = '';
         const pendingBoletos = currentClientData.payments.installments.filter(boleto => !boleto.paid);
@@ -393,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
         generatePaymentLinkButton.disabled = true;
     }
 
-    // Alterna a seleção de um boleto para antecipação
     function toggleBoletoSelection(boletoId) {
         const index = selectedBoletos.indexOf(boletoId);
         const boletoElement = anticipateBoletosContainer.querySelector(`[data-boleto-id="${boletoId}"]`);
@@ -408,7 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAnticipationTotal();
     }
 
-    // Atualiza o valor total da antecipação
     function updateAnticipationTotal() {
         let total = 0;
         currentClientData.payments.installments.forEach(boleto => {
@@ -420,7 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
         generatePaymentLinkButton.disabled = selectedBoletos.length === 0;
     }
 
-    // Simula a geração do link de pagamento
     generatePaymentLinkButton.addEventListener('click', () => {
         if (selectedBoletos.length === 0) {
             alert('Selecione pelo menos um boleto para antecipar.');
@@ -453,11 +534,99 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAnticipationTotal();
             paymentLinkMessage.classList.add('hidden');
             
-            // Re-renderiza a lista de clientes e o resumo do dashboard após o pagamento simulado
             renderClientList();
             updateDashboardSummary();
         }, 2000);
     });
+
+    // --- Lógica para o NOVO MODAL de Cadastro de Cliente ---
+
+    newClientButton.addEventListener('click', () => {
+        // Limpa o formulário ao abrir
+        newClientForm.reset();
+        newClientModal.classList.add('active');
+        populateCarModelFilters(); // Garante que o select de carros esteja atualizado
+    });
+
+    // Lógica para fechar os modais genérica
+    closeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modalId = e.target.dataset.modalId;
+            document.getElementById(modalId).classList.remove('active');
+        });
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === paymentDetailsModal) {
+            paymentDetailsModal.classList.remove('active');
+        }
+        if (event.target === newClientModal) {
+            newClientModal.classList.remove('active');
+        }
+    });
+
+    newClientForm.addEventListener('submit', (e) => {
+        e.preventDefault(); // Impede o envio padrão do formulário
+
+        const name = newClientNameInput.value.trim();
+        const cpf = newClientCpfInput.value.trim();
+        const carModel = newClientCarModelSelect.value;
+        const totalInstallments = parseInt(newClientInstallmentsInput.value, 10);
+        const installmentValue = parseFloat(newClientInstallmentValueInput.value);
+        const dueDateDay = parseInt(newClientDueDateInput.value, 10);
+
+        // Validações básicas
+        if (!name || !cpf || !carModel || isNaN(totalInstallments) || totalInstallments <= 0 ||
+            isNaN(installmentValue) || installmentValue <= 0 || isNaN(dueDateDay) || dueDateDay < 1 || dueDateDay > 31) {
+            alert('Por favor, preencha todos os campos corretamente.');
+            return;
+        }
+
+        const newClientId = generateUniqueId();
+        const installments = [];
+        const currentDate = new Date();
+
+        for (let i = 0; i < totalInstallments; i++) {
+            const installmentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, dueDateDay);
+            // Ajusta o dia se for inválido para o mês (ex: dia 31 em fev)
+            if (installmentDate.getDate() !== dueDateDay) {
+                installmentDate.setDate(0); // Último dia do mês anterior
+                installmentDate.setDate(dueDateDay); // Tenta o dia de vencimento novamente
+                if (installmentDate.getDate() !== dueDateDay) { // Se ainda for diferente, vai para o último dia do mês
+                    installmentDate.setDate(0); // Último dia do mês anterior
+                    installmentDate.setDate(0); // Último dia do mês do vencimento
+                }
+            }
+            
+            installments.push({
+                id: i + 1,
+                value: installmentValue,
+                paid: false, // Todos os boletos de novo cliente começam como pendentes
+                date: installmentDate.toISOString().split('T')[0] // Formato YYYY-MM-DD
+            });
+        }
+
+        const newClient = {
+            id: newClientId,
+            name: name,
+            cpf: cpf,
+            carModel: carModel,
+            payments: {
+                method: 'Bolepix',
+                totalInstallments: totalInstallments,
+                installments: installments
+            }
+        };
+
+        demoClients.push(newClient); // Adiciona o novo cliente aos dados de demonstração
+
+        alert(`Cliente ${name} cadastrado com sucesso!`);
+        newClientModal.classList.remove('active'); // Fecha o modal
+        renderClientList(); // Atualiza a lista de clientes
+        updateDashboardSummary(); // Atualiza o resumo e o gráfico
+        populateCarModelFilters(); // Garante que o filtro de carros seja atualizado se houver um novo modelo
+    });
+
 
     // --- Event Listeners para busca e filtros ---
     clientSearchInput.addEventListener('input', renderClientList);
