@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecar - Sistema Interno</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajaxweb/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
- <div id="login-screen" class="screen active">
+    <div id="login-screen" class="screen active">
         <video autoplay loop muted class="login-background-video">
             <source src="Lecar459.mp4" type="video/mp4">
             Seu navegador não suporta vídeos HTML5.
@@ -35,11 +36,51 @@
             <button id="logout-button" class="btn-secondary">Sair</button>
         </div>
 
-        <div class="client-list">
-            <h2>Clientes com Compras</h2>
-            <ul id="clients-ul">
-                </ul>
+        <div class="dashboard-content">
+            <div class="controls-section">
+                <div class="search-filter-group">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="client-search" placeholder="Buscar cliente por nome...">
+                    </div>
+                    <div class="filters">
+                        <select id="car-model-filter">
+                            <option value="all">Filtrar por Carro (Todos)</option>
+                            </select>
+                        <select id="payment-status-filter">
+                            <option value="all">Filtrar por Status (Todos)</option>
+                            <option value="paid">Pagamento Concluído</option>
+                            <option value="pending">Pagamento Pendente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="summary-cards">
+                    <div class="card total-paid">
+                        <h3>Total Recebido</h3>
+                        <p id="total-paid-value">R$ 0,00</p>
+                    </div>
+                    <div class="card total-pending">
+                        <h3>Total Pendente</h3>
+                        <p id="total-pending-value">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3>Visão Geral de Recebimentos por Carro</h3>
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+
+
+            <div class="client-list">
+                <h2>Clientes com Compras</h2>
+                <ul id="clients-ul">
+                    </ul>
+                <p id="no-clients-message" class="hidden">Nenhum cliente encontrado com os critérios de busca/filtro.</p>
+            </div>
         </div>
+
 
         <div id="payment-details-modal" class="modal">
             <div class="modal-content">
