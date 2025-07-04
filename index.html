@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecar - Sistema Interno</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajaxweb/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -33,7 +33,8 @@
     <div id="dashboard-screen" class="screen">
         <div class="header">
             <h1>Compras de Clientes - Lecar</h1>
-            <button id="logout-button" class="btn-secondary">Sair</button>
+            <div class="header-actions"> <button id="new-client-button" class="btn-primary-outline">Novo Cliente</button> <button id="logout-button" class="btn-secondary">Sair</button>
+            </div>
         </div>
 
         <div class="dashboard-content">
@@ -84,7 +85,7 @@
 
         <div id="payment-details-modal" class="modal">
             <div class="modal-content">
-                <span class="close-button">&times;</span>
+                <span class="close-button" data-modal-id="payment-details-modal">&times;</span>
                 <h3 id="modal-client-name"></h3>
                 <p>CPF: <span id="modal-client-cpf"></span></p>
                 <p>Modelo do Carro: <span id="modal-car-model"></span></p>
@@ -106,6 +107,42 @@
                 </div>
             </div>
         </div>
+
+        <div id="new-client-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" data-modal-id="new-client-modal">&times;</span>
+                <h2>Cadastrar Novo Cliente</h2>
+                <form id="new-client-form">
+                    <div class="form-group">
+                        <label for="new-client-name">Nome Completo:</label>
+                        <input type="text" id="new-client-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-cpf">CPF:</label>
+                        <input type="text" id="new-client-cpf" placeholder="Ex: 123.456.789-00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-car-model">Modelo do Carro:</label>
+                        <select id="new-client-car-model" required>
+                            </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-installments">Número de Parcelas:</label>
+                        <input type="number" id="new-client-installments" min="1" max="60" value="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-installment-value">Valor da Parcela (R$):</label>
+                        <input type="number" id="new-client-installment-value" min="1" step="0.01" value="1000.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-due-date">Dia de Vencimento do Boleto (1-31):</label>
+                        <input type="number" id="new-client-due-date" min="1" max="31" value="10" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Cadastrar Cliente</button>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
