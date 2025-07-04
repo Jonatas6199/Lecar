@@ -23,34 +23,34 @@ body {
 
 .screen.active {
     display: flex;
-    justify-content: center; /* Centraliza o conteúdo horizontalmente */
-    align-items: center; /* Centraliza o conteúdo verticalmente */
+    justify-content: center;
+    align-items: center;
 }
 
 /* --- Tela de Login --- */
 #login-screen {
-    flex-direction: column; /* O vídeo e o form estarão em camadas (usando z-index) */
+    flex-direction: column;
 }
 
 .login-background-video {
-    position: fixed; /* Fixo para cobrir a tela mesmo durante rolagem (se houver) */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Preenche o contêiner mantendo a proporção, pode cortar */
-    z-index: 0; /* Garante que o vídeo fique atrás do conteúdo */
+    object-fit: cover;
+    z-index: 0;
 }
 
 .login-form-container {
-    background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente para o form */
+    background-color: rgba(255, 255, 255, 0.8);
     padding: 40px;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     text-align: center;
-    z-index: 1; /* Garante que o formulário fique na frente do vídeo */
-    width: 80%; /* Largura do formulário */
-    max-width: 400px; /* Largura máxima do formulário */
+    z-index: 1;
+    width: 80%;
+    max-width: 400px;
 }
 
 .company-logo {
@@ -90,7 +90,7 @@ body {
 }
 
 .btn-primary {
-    background-color: #000; /* Preto */
+    background-color: #000;
     color: #fff;
     padding: 12px 25px;
     border: none;
@@ -106,6 +106,22 @@ body {
     background-color: #333;
 }
 
+.btn-secondary {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #c82333;
+}
+/* ... (seu CSS anterior) ... */
+
 /* --- Tela de Dashboard (Informações de Compras) --- */
 #dashboard-screen {
     flex-direction: column;
@@ -113,11 +129,10 @@ body {
     align-items: flex-start;
     width: 100%;
     box-sizing: border-box;
-    justify-content: flex-start; /* Alinha o conteúdo ao topo */
+    justify-content: flex-start;
+    overflow-y: auto;
+    height: 100vh; /* Garante que o dashboard ocupe 100% da altura da viewport */
 }
-
-
-/* ... (o restante do seu CSS permanece o mesmo) ... */
 
 .header {
     width: 100%;
@@ -127,6 +142,7 @@ body {
     margin-bottom: 20px;
     border-bottom: 1px solid #eee;
     padding-bottom: 15px;
+    flex-shrink: 0;
 }
 
 .header h1 {
@@ -134,13 +150,141 @@ body {
     color: #000;
 }
 
-.client-list {
+.dashboard-content {
+    display: flex;
+    flex-direction: row;
     width: 100%;
+    flex-grow: 1;
+    gap: 20px;
+    /* Adiciona altura máxima para garantir que o flex-grow funcione corretamente */
+    max-height: calc(100vh - 120px); /* Altura da viewport menos o header e padding */
+}
+
+.controls-section {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Permite que esta coluna role independentemente se seu conteúdo for muito longo */
+    overflow-y: auto;
+}
+
+.search-filter-group {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.search-box i {
+    margin-right: 8px;
+    color: #555;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    font-size: 1em;
+}
+
+.filters select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+    margin-bottom: 5px;
+    font-size: 0.95em;
+}
+.filters select:last-child {
+    margin-bottom: 0;
+}
+
+.summary-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-shrink: 0; /* Impede que os cartões encolham */
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    text-align: center;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #000;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.total-paid p {
+    color: #28a745;
+}
+
+.total-pending p {
+    color: #dc3545;
+}
+
+.chart-section {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 250px; /* Adiciona uma altura mínima para o gráfico */
+    max-height: 400px; /* Adiciona uma altura máxima para o gráfico */
+}
+
+.chart-section h3 {
+    margin-top: 0;
+    color: #000;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+/* O canvas Chart.js não tem problemas de renderização infinita se seu contêiner tiver altura */
+#paymentChart {
+    flex-grow: 1; /* Permite que o canvas ocupe o espaço disponível dentro do chart-section */
+    width: 100% !important; /* Garante que o Chart.js se ajuste à largura */
+    height: auto !important; /* Permite que o Chart.js ajuste a altura automaticamente */
+}
+
+
+.client-list {
+    flex-grow: 1;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     padding: 20px;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .client-list h2 {
@@ -149,12 +293,15 @@ body {
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 #clients-ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
 #clients-ul li {
@@ -180,23 +327,31 @@ body {
     color: #000;
 }
 
-/* --- Modal de Detalhes de Pagamento --- */
+#no-clients-message {
+    text-align: center;
+    color: #888;
+    margin-top: 20px;
+}
+
+/* ... (o restante do seu CSS para o modal permanece o mesmo) ... */
+
+/* --- Modal de Detalhes de Pagamento (Mantido o mesmo) --- */
 .modal {
-    display: none; /* Escondido por padrão */
-    position: fixed; /* Fica por cima de tudo */
-    z-index: 1; /* Posição superior */
+    display: none;
+    position: fixed;
+    z-index: 1;
     left: 0;
     top: 0;
-    width: 100%; /* Largura total */
-    height: 100%; /* Altura total */
-    overflow: auto; /* Habilita scroll se necessário */
-    background-color: rgba(0,0,0,0.4); /* Fundo escuro semi-transparente */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
     justify-content: center;
     align-items: center;
 }
 
 .modal.active {
-    display: flex; /* Mostra o modal quando ativo */
+    display: flex;
 }
 
 .modal-content {
@@ -204,7 +359,7 @@ body {
     margin: auto;
     padding: 30px;
     border: 1px solid #888;
-    width: 80%; /* Pode ajustar a largura */
+    width: 80%;
     max-width: 700px;
     border-radius: 10px;
     position: relative;
@@ -213,7 +368,6 @@ body {
     animation-duration: 0.4s
 }
 
-/* Animação do modal */
 @keyframes animatetop {
     from {top: -300px; opacity: 0}
     to {top: 0; opacity: 1}
@@ -260,7 +414,7 @@ body {
 }
 
 .boleto-item {
-    width: 80px; /* Tamanho dos "quadradinhos" */
+    width: 80px;
     height: 80px;
     display: flex;
     flex-direction: column;
@@ -280,15 +434,15 @@ body {
 }
 
 .boleto-item.paid {
-    background-color: #28a745; /* Verde para pago */
+    background-color: #28a745;
 }
 
 .boleto-item.pending {
-    background-color: #ffc107; /* Amarelo para pendente */
+    background-color: #ffc107;
 }
 
 .boleto-item.selected {
-    background-color: #007bff; /* Azul para selecionado */
+    background-color: #007bff;
     border: 2px solid #0056b3;
 }
 
