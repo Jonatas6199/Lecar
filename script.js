@@ -6,6 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const clientsUl = document.getElementById('clients-ul');
+    const noClientsMessage = document.getElementById('no-clients-message'); // Nova mensagem de "nenhum cliente"
+
+    const clientSearchInput = document.getElementById('client-search'); // Campo de busca
+    const carModelFilter = document.getElementById('car-model-filter'); // Filtro por carro
+    const paymentStatusFilter = document.getElementById('payment-status-filter'); // Filtro por status de pagamento
+
+    const totalPaidValueElement = document.getElementById('total-paid-value'); // Elemento para total pago
+    const totalPendingValueElement = document.getElementById('total-pending-value'); // Elemento para total pendente
+    const paymentChartCanvas = document.getElementById('paymentChart'); // Canvas para o gráfico
+
     const paymentDetailsModal = document.getElementById('payment-details-modal');
     const closeButton = paymentDetailsModal.querySelector('.close-button');
     const modalClientName = document.getElementById('modal-client-name');
@@ -18,9 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentLinkMessage = document.getElementById('payment-link-message');
 
     let selectedBoletos = [];
-    let currentClientData = null; // Para armazenar os dados do cliente atualmente visualizado
+    let currentClientData = null;
+    let paymentChartInstance = null; // Para armazenar a instância do Chart.js
 
-    // Dados de demonstração (mantêm os mesmos dados)
+    // Dados de demonstração (adicionando mais clientes e modelos de carro)
     const demoClients = [
         {
             id: 'user001',
@@ -81,19 +92,213 @@ document.addEventListener('DOMContentLoaded', () => {
                     { id: 12, value: 3000.00, paid: false, date: '2025-02-01' }
                 ]
             }
+        },
+        {
+            id: 'user003',
+            name: 'Carlos Oliveira',
+            cpf: '111.222.333-44',
+            carModel: 'Lecar Campo',
+            payments: {
+                method: 'Bolepix',
+                totalInstallments: 36,
+                installments: Array.from({ length: 36 }, (_, i) => ({
+                    id: i + 1,
+                    value: 1500.00,
+                    paid: i < 15, // 15 pagos, 21 pendentes
+                    date: `2024-${String(i + 1).padStart(2, '0')}-05` // Data simulada
+                }))
+            }
+        },
+        {
+            id: 'user004',
+            name: 'Diana Pires',
+            cpf: '555.666.777-88',
+            carModel: 'Lecar 459',
+            payments: {
+                method: 'Bolepix',
+                totalInstallments: 10,
+                installments: Array.from({ length: 10 }, (_, i) => ({
+                    id: i + 1,
+                    value: 4000.00,
+                    paid: i < 10, // Todos pagos
+                    date: `2024-${String(i + 1).padStart(2, '0')}-20`
+                }))
+            }
         }
     ];
+
+    // --- Funções do Dashboard ---
+
+    // Função para renderizar a lista de clientes com filtros e busca
+    function renderClientList() {
+        const searchTerm = clientSearchInput.value.toLowerCase();
+        const selectedCarModel = carModelFilter.value;
+        const selectedPaymentStatus = paymentStatusFilter.value;
+
+        let filteredClients = demoClients.filter(client => {
+            const matchesSearch = client.name.toLowerCase().includes(searchTerm);
+            const matchesCarModel = selectedCarModel === 'all' || client.carModel === selectedCarModel;
+
+            let matchesPaymentStatus = true;
+            if (selectedPaymentStatus !== 'all') {
+                const totalPaid = client.payments.installments.filter(b => b.paid).length;
+                const totalInstallments = client.payments.totalInstallments;
+                if (selectedPaymentStatus === 'paid') {
+                    matchesPaymentStatus = (totalPaid === totalInstallments);
+                } else if (selectedPaymentStatus === 'pending') {
+                    matchesPaymentStatus = (totalPaid < totalInstallments);
+                }
+            }
+            return matchesSearch && matchesCarModel && matchesPaymentStatus;
+        });
+
+        clientsUl.innerHTML = ''; // Limpa a lista existente
+
+        if (filteredClients.length === 0) {
+            noClientsMessage.classList.remove('hidden');
+        } else {
+            noClientsMessage.classList.add('hidden');
+            filteredClients.forEach(client => {
+                const li = document.createElement('li');
+                li.dataset.clientId = client.id;
+                li.innerHTML = `
+                    <span>${client.name} - ${client.cpf}</span>
+                    <span>${client.carModel}</span>
+                `;
+                li.addEventListener('click', () => showPaymentDetails(client.id));
+                clientsUl.appendChild(li);
+            });
+        }
+    }
+
+    // Função para preencher o filtro de modelos de carro
+    function populateCarModelFilter() {
+        const carModels = [...new Set(demoClients.map(client => client.carModel))];
+        carModels.sort().forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            carModelFilter.appendChild(option);
+        });
+    }
+
+    // Função para calcular e exibir totais e renderizar o gráfico
+    function updateDashboardSummary() {
+        let totalPaid = 0;
+        let totalPending = 0;
+        const salesByCarModel = {}; // { 'Lecar 459': { paid: 0, pending: 0 } }
+
+        demoClients.forEach(client => {
+            if (!salesByCarModel[client.carModel]) {
+                salesByCarModel[client.carModel] = { paid: 0, pending: 0 };
+            }
+
+            client.payments.installments.forEach(boleto => {
+                if (boleto.paid) {
+                    totalPaid += boleto.value;
+                    salesByCarModel[client.carModel].paid += boleto.value;
+                } else {
+                    totalPending += boleto.value;
+                    salesByCarModel[client.carModel].pending += boleto.value;
+                }
+            });
+        });
+
+        totalPaidValueElement.textContent = `R$ ${totalPaid.toFixed(2).replace('.', ',')}`;
+        totalPendingValueElement.textContent = `R$ ${totalPending.toFixed(2).replace('.', ',')}`;
+
+        renderPaymentChart(salesByCarModel);
+    }
+
+    // Função para renderizar o gráfico com Chart.js
+    function renderPaymentChart(data) {
+        const labels = Object.keys(data);
+        const paidData = labels.map(model => data[model].paid);
+        const pendingData = labels.map(model => data[model].pending);
+
+        // Destrói a instância anterior do gráfico se existir
+        if (paymentChartInstance) {
+            paymentChartInstance.destroy();
+        }
+
+        paymentChartInstance = new Chart(paymentChartCanvas, {
+            type: 'bar', // Pode ser 'bar', 'doughnut', 'pie', etc.
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total Recebido',
+                        data: paidData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)', // Verde
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Total Pendente',
+                        data: pendingData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)', // Vermelho
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Importante para controle de tamanho
+                scales: {
+                    x: {
+                        stacked: true, // Empilha as barras
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: true, // Empilha as barras
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
+
+
+    // --- Funções de Login/Logout e Modal de Pagamento (Mantidas as mesmas) ---
 
     // Função para simular o login
     loginButton.addEventListener('click', () => {
         const email = emailInput.value;
         const password = passwordInput.value;
 
-        // Simples validação para a demo
         if (email === 'teste@lecar.com' && password === 'lecar123') {
-            loginScreen.classList.remove('active'); // Remove a classe 'active' da tela de login
-            dashboardScreen.classList.add('active'); // Adiciona a classe 'active' à tela do dashboard
-            renderClientList();
+            loginScreen.classList.remove('active');
+            dashboardScreen.classList.add('active');
+            populateCarModelFilter(); // Popula o filtro de carros ao entrar
+            updateDashboardSummary(); // Atualiza o resumo e o gráfico
+            renderClientList(); // Renderiza a lista inicial
         } else {
             alert('Email ou senha inválidos. Use: teste@lecar.com / lecar123');
         }
@@ -101,29 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função para simular o logout
     logoutButton.addEventListener('click', () => {
-        dashboardScreen.classList.remove('active'); // Remove a classe 'active' do dashboard
-        loginScreen.classList.add('active'); // Adiciona a classe 'active' à tela de login
+        dashboardScreen.classList.remove('active');
+        loginScreen.classList.add('active');
         emailInput.value = '';
         passwordInput.value = '';
-        clientsUl.innerHTML = ''; // Limpa a lista de clientes
+        clientsUl.innerHTML = '';
+        clientSearchInput.value = ''; // Limpa a busca
+        carModelFilter.value = 'all'; // Reseta o filtro de carro
+        paymentStatusFilter.value = 'all'; // Reseta o filtro de status
+        if (paymentChartInstance) { // Destrói o gráfico ao sair
+            paymentChartInstance.destroy();
+            paymentChartInstance = null;
+        }
     });
-
-    // ... (o restante do seu JavaScript permanece o mesmo) ...
-
-    // Renderiza a lista de clientes no dashboard
-    function renderClientList() {
-        clientsUl.innerHTML = ''; // Limpa a lista existente
-        demoClients.forEach(client => {
-            const li = document.createElement('li');
-            li.dataset.clientId = client.id;
-            li.innerHTML = `
-                <span>${client.name} - ${client.cpf}</span>
-                <span>${client.carModel}</span>
-            `;
-            li.addEventListener('click', () => showPaymentDetails(client.id));
-            clientsUl.appendChild(li);
-        });
-    }
 
     // Mostra os detalhes de pagamento do cliente no modal
     function showPaymentDetails(clientId) {
@@ -135,10 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCarModel.textContent = currentClientData.carModel;
 
         renderBoletos();
-        renderAnticipationBoletos(); // Renderiza os boletos para antecipação
-        selectedBoletos = []; // Reseta a seleção
-        updateAnticipationTotal(); // Atualiza o total para 0
-        paymentLinkMessage.classList.add('hidden'); // Esconde a mensagem do link
+        renderAnticipationBoletos();
+        selectedBoletos = [];
+        updateAnticipationTotal();
+        paymentLinkMessage.classList.add('hidden');
 
         paymentDetailsModal.classList.add('active');
     }
@@ -164,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             boletoDiv.classList.add(boleto.paid ? 'paid' : 'pending');
             boletoDiv.innerHTML = `
                 <span>Boleto ${boleto.id}</span>
-                <span>R$ ${boleto.value.toFixed(2)}</span>
+                <span>R$ ${boleto.value.toFixed(2).replace('.', ',')}</span>
                 <span>${boleto.paid ? 'Pago' : 'Pendente'}</span>
                 ${boleto.paid ? `<span>${boleto.date}</span>` : ''}
             `;
@@ -189,13 +384,13 @@ document.addEventListener('DOMContentLoaded', () => {
             boletoDiv.dataset.boletoId = boleto.id;
             boletoDiv.innerHTML = `
                 <span>Boleto ${boleto.id}</span>
-                <span>R$ ${boleto.value.toFixed(2)}</span>
+                <span>R$ ${boleto.value.toFixed(2).replace('.', ',')}</span>
                 <span>${boleto.date}</span>
             `;
             boletoDiv.addEventListener('click', () => toggleBoletoSelection(boleto.id));
             anticipateBoletosContainer.appendChild(boletoDiv);
         });
-        generatePaymentLinkButton.disabled = true; // Desabilita por padrão
+        generatePaymentLinkButton.disabled = true;
     }
 
     // Alterna a seleção de um boleto para antecipação
@@ -204,11 +399,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const boletoElement = anticipateBoletosContainer.querySelector(`[data-boleto-id="${boletoId}"]`);
 
         if (index > -1) {
-            // Remove da seleção
             selectedBoletos.splice(index, 1);
             boletoElement.classList.remove('selected');
         } else {
-            // Adiciona à seleção
             selectedBoletos.push(boletoId);
             boletoElement.classList.add('selected');
         }
@@ -223,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 total += boleto.value;
             }
         });
-        anticipationTotalValue.textContent = `R$ ${total.toFixed(2)}`;
+        anticipationTotalValue.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
         generatePaymentLinkButton.disabled = selectedBoletos.length === 0;
     }
 
@@ -240,29 +433,36 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Simulação de geração de link de pagamento
         const paymentLink = `https://lecar.com/pagamento-antecipado?valor=${totalValue.toFixed(2)}&boletos=${selectedBoletos.join(',')}`;
         paymentLinkMessage.querySelector('a').href = paymentLink;
-        paymentLinkMessage.querySelector('a').textContent = 'Clique aqui para pagar'; // Reset text
+        paymentLinkMessage.querySelector('a').textContent = 'Clique aqui para pagar';
         paymentLinkMessage.classList.remove('hidden');
 
-        // Simula o pagamento (para fins de demonstração, marca como pago imediatamente)
         setTimeout(() => {
             selectedBoletos.forEach(boletoId => {
                 const boleto = currentClientData.payments.installments.find(b => b.id === boletoId);
                 if (boleto) {
                     boleto.paid = true;
-                    boleto.date = new Date().toISOString().split('T')[0]; // Atualiza a data para hoje
+                    boleto.date = new Date().toISOString().split('T')[0];
                 }
             });
-            alert(`Pagamento de R$ ${totalValue.toFixed(2)} simulado com sucesso! Boletos atualizados.`);
-            renderBoletos(); // Re-renderiza os boletos para mostrar os pagos
-            renderAnticipationBoletos(); // Re-renderiza a seção de antecipação
-            selectedBoletos = []; // Limpa a seleção
-            updateAnticipationTotal(); // Zera o total
-            paymentLinkMessage.classList.add('hidden'); // Esconde a mensagem
-        }, 2000); // Simula um atraso de 2 segundos para o processamento
+            alert(`Pagamento de R$ ${totalValue.toFixed(2).replace('.', ',')} simulado com sucesso! Boletos atualizados.`);
+            renderBoletos();
+            renderAnticipationBoletos();
+            selectedBoletos = [];
+            updateAnticipationTotal();
+            paymentLinkMessage.classList.add('hidden');
+            
+            // Re-renderiza a lista de clientes e o resumo do dashboard após o pagamento simulado
+            renderClientList();
+            updateDashboardSummary();
+        }, 2000);
     });
+
+    // --- Event Listeners para busca e filtros ---
+    clientSearchInput.addEventListener('input', renderClientList);
+    carModelFilter.addEventListener('change', renderClientList);
+    paymentStatusFilter.addEventListener('change', renderClientList);
 
     // Inicia na tela de login
     loginScreen.classList.add('active');
