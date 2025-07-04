@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecar - Sistema Interno</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+ <div id="login-screen" class="screen active">
+        <video autoplay loop muted class="login-background-video">
+            <source src="Lecar459.mp4" type="video/mp4">
+            Seu navegador não suporta vídeos HTML5.
+        </video>
+        <div class="login-form-container">
+            <img src="logo_lecar.svg" alt="Logo Lecar" class="company-logo">
+            <p>Seu espaço para o logo da Lecar.</p>
+            <h2>Bem-vindo(a)</h2>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="email" id="email" placeholder="E-mail" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-key"></i>
+                <input type="password" id="password" placeholder="Senha" required>
+            </div>
+            <button id="login-button" class="btn-primary">Entrar</button>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen">
+        <div class="header">
+            <h1>Compras de Clientes - Lecar</h1>
+            <button id="logout-button" class="btn-secondary">Sair</button>
+        </div>
+
+        <div class="client-list">
+            <h2>Clientes com Compras</h2>
+            <ul id="clients-ul">
+                </ul>
+        </div>
+
+        <div id="payment-details-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3 id="modal-client-name"></h3>
+                <p>CPF: <span id="modal-client-cpf"></span></p>
+                <p>Modelo do Carro: <span id="modal-car-model"></span></p>
+
+                <h4>Status dos Boletos</h4>
+                <div id="boleto-status-container">
+                    </div>
+
+                <h4>Antecipar Boletos</h4>
+                <div class="anticipation-section">
+                    <p>Selecione os boletos restantes para antecipar:</p>
+                    <div id="anticipate-boletos-container">
+                        </div>
+                    <div class="anticipation-summary">
+                        <p>Total a Pagar: <span id="anticipation-total-value">R$ 0,00</span></p>
+                        <button id="generate-payment-link-button" class="btn-primary" disabled>Gerar Link de Pagamento</button>
+                    </div>
+                    <p id="payment-link-message" class="hidden">Link de Pagamento Gerado: <a href="#" target="_blank">Clique aqui para pagar</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
