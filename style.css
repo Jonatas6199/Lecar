@@ -120,7 +120,26 @@ body {
 .btn-secondary:hover {
     background-color: #c82333;
 }
-/* ... (seu CSS anterior) ... */
+/* ... (seu CSS existente até o .btn-secondary:hover) ... */
+
+/* Novo estilo para botão de contorno */
+.btn-primary-outline {
+    background-color: transparent;
+    color: #000; /* Cor do texto preta */
+    border: 1px solid #000; /* Borda preta */
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    margin-right: 10px; /* Espaçamento entre os botões */
+}
+
+.btn-primary-outline:hover {
+    background-color: #000;
+    color: #fff;
+}
+
 
 /* --- Tela de Dashboard (Informações de Compras) --- */
 #dashboard-screen {
@@ -131,7 +150,7 @@ body {
     box-sizing: border-box;
     justify-content: flex-start;
     overflow-y: auto;
-    height: 100vh; /* Garante que o dashboard ocupe 100% da altura da viewport */
+    height: 100vh;
 }
 
 .header {
@@ -150,14 +169,19 @@ body {
     color: #000;
 }
 
+.header-actions { /* Novo estilo para agrupar botões do header */
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espaçamento entre os botões */
+}
+
 .dashboard-content {
     display: flex;
     flex-direction: row;
     width: 100%;
     flex-grow: 1;
     gap: 20px;
-    /* Adiciona altura máxima para garantir que o flex-grow funcione corretamente */
-    max-height: calc(100vh - 120px); /* Altura da viewport menos o header e padding */
+    max-height: calc(100vh - 120px);
 }
 
 .controls-section {
@@ -165,7 +189,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    /* Permite que esta coluna role independentemente se seu conteúdo for muito longo */
     overflow-y: auto;
 }
 
@@ -216,7 +239,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    flex-shrink: 0; /* Impede que os cartões encolham */
+    flex-shrink: 0;
 }
 
 .card {
@@ -256,8 +279,8 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    min-height: 250px; /* Adiciona uma altura mínima para o gráfico */
-    max-height: 400px; /* Adiciona uma altura máxima para o gráfico */
+    min-height: 250px;
+    max-height: 400px;
 }
 
 .chart-section h3 {
@@ -268,11 +291,10 @@ body {
     flex-shrink: 0;
 }
 
-/* O canvas Chart.js não tem problemas de renderização infinita se seu contêiner tiver altura */
 #paymentChart {
-    flex-grow: 1; /* Permite que o canvas ocupe o espaço disponível dentro do chart-section */
-    width: 100% !important; /* Garante que o Chart.js se ajuste à largura */
-    height: auto !important; /* Permite que o Chart.js ajuste a altura automaticamente */
+    flex-grow: 1;
+    width: 100% !important;
+    height: auto !important;
 }
 
 
@@ -333,19 +355,50 @@ body {
     margin-top: 20px;
 }
 
-/* ... (o restante do seu CSS para o modal permanece o mesmo) ... */
+/* --- Estilos para o NOVO Modal de Cadastro de Cliente --- */
+.form-group {
+    margin-bottom: 15px;
+    width: 100%; /* Garante que os grupos de formulário ocupem a largura total do modal-content */
+    text-align: left; /* Alinha labels à esquerda */
+}
 
-/* --- Modal de Detalhes de Pagamento (Mantido o mesmo) --- */
+.form-group label {
+    display: block; /* Cada label em uma nova linha */
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box; /* Inclui padding e border no width */
+    font-size: 1em;
+}
+
+/* Ajustes para o botão submit dentro do formulário do modal */
+#new-client-form .btn-primary {
+    margin-top: 20px;
+    width: auto; /* Ocupa apenas o necessário, não 100% da largura do modal-content */
+    padding: 12px 30px; /* Ajusta o padding para ser mais amigável */
+}
+
+
+/* --- Modal Genérico (Aplica-se a ambos os modais) --- */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 1000; /* Z-index alto para garantir que o modal fique por cima de tudo */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.6); /* Fundo mais escuro para modals */
     justify-content: center;
     align-items: center;
 }
@@ -359,14 +412,24 @@ body {
     margin: auto;
     padding: 30px;
     border: 1px solid #888;
-    width: 80%;
-    max-width: 700px;
+    width: 90%; /* Ajuste a largura para ser mais flexível */
+    max-width: 500px; /* Largura máxima para o modal de cadastro */
     border-radius: 10px;
     position: relative;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
     animation-name: animatetop;
-    animation-duration: 0.4s
+    animation-duration: 0.4s;
+    display: flex; /* Para centralizar o conteúdo do modal */
+    flex-direction: column;
+    align-items: center; /* Centraliza horizontalmente */
+    text-align: center; /* Centraliza textos dentro do modal */
 }
+
+/* Reajuste para o modal de detalhes de pagamento para que ele possa ser maior */
+#payment-details-modal .modal-content {
+    max-width: 700px;
+}
+
 
 @keyframes animatetop {
     from {top: -300px; opacity: 0}
@@ -381,6 +444,7 @@ body {
     position: absolute;
     top: 10px;
     right: 20px;
+    cursor: pointer;
 }
 
 .close-button:hover,
@@ -390,12 +454,13 @@ body {
     cursor: pointer;
 }
 
-.modal-content h3, .modal-content h4 {
+.modal-content h2, .modal-content h3, .modal-content h4 {
     color: #000;
     margin-top: 0;
     margin-bottom: 15px;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
+    width: 100%; /* Garante que os títulos ocupem a largura total */
 }
 
 .modal-content p {
@@ -411,6 +476,8 @@ body {
     border: 1px solid #eee;
     padding: 15px;
     border-radius: 8px;
+    width: 100%; /* Garante que ocupem a largura total */
+    box-sizing: border-box;
 }
 
 .boleto-item {
@@ -452,11 +519,20 @@ body {
     font-size: 0.7em;
     font-weight: normal;
 }
+.boleto-item .boleto-link { /* Estilo para o link do boleto */
+    font-size: 0.7em;
+    color: #fff;
+    text-decoration: underline;
+    margin-top: 5px;
+    cursor: pointer;
+}
 
 .anticipation-section {
     margin-top: 30px;
     border-top: 1px solid #eee;
     padding-top: 20px;
+    width: 100%; /* Garante que ocupe a largura total */
+    box-sizing: border-box;
 }
 
 .anticipation-summary {
